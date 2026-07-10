@@ -1,0 +1,94 @@
+<?xml version="1.0"?>
+
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro"
+       xmlns:gz="http://gazebosim.org/schema">
+
+
+    <!-- VARIABLES -->
+    <xacro:property name="chassis_length" value="0.035" />
+    <xacro:property name="chassis_width"  value="0.120" />
+    <xacro:property name="chassis_height" value="0.080" />
+    
+    <xacro:property name="wheel_radius"   value="0.022" />
+    <xacro:property name="wheel_width"    value="0.018" />  
+    <xacro:property name="track_width"    value="0.140" />   <!-- left-to-right wheel center distance -->
+    
+
+    <!-- FUNCTIONS/MACROS -->
+    <xacro:macro name="wheel" params="name_prefix">
+        <link name="${name_prefix}_wheel">
+            
+            <xacro:cylinder_inertia m="0.018" r="${wheel_radius}" h="${wheel_width}" 
+                                    o_xyz="0.0 0.0 0.0" o_rpy="${pi/2.0} 0.0 0.0" />
+
+            <visual>
+                <origin xyz="0.0 0.0 0.0" rpy="${pi/2.0} 0.0 0.0" />
+                <geometry>
+                    <cylinder radius="${wheel_radius}" length="${wheel_width}" /> 
+                </geometry>
+                <material name="gray" />
+            </visual>
+
+            <collision>
+                <origin xyz="0.0 0.0 0.0" rpy="${pi/2.0} 0.0 0.0" />
+                <geometry>
+                  <sphere radius="${wheel_radius}" />
+                </geometry>
+            </collision>
+
+        </link>
+    </xacro:macro>
+
+   
+    <!-- LINKS -->
+    <link name="base_link">
+    </link>
+
+    <link name="chassis">
+        
+        <xacro:box_inertia m="0.3" x="${chassis_length}" y="${chassis_width}" z="${chassis_height}" 
+                           o_xyz="0.0 0.0 0.0" o_rpy="0.0 0.0 0.0" />
+
+        <visual>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+            <geometry>
+                <box size="${chassis_length} ${chassis_width} ${chassis_height}" />
+            </geometry>        
+            <material name="cyan" />
+        </visual>
+
+        <collision>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+            <geometry>
+                <box size="${chassis_length} ${chassis_width} ${chassis_height}" />
+            </geometry>        
+        </collision>
+
+    </link>
+    
+    <xacro:wheel name_prefix="left" />
+    <xacro:wheel name_prefix="right" />
+
+
+    <!-- JOINTS -->
+    <joint name="base_link_TO_chassis" type="fixed">
+        <parent link="base_link" />
+        <child link="chassis" />
+        <origin xyz="0.0 0.0 ${wheel_radius + (chassis_height/2.0)}" rpy= "0.0 0.0 0.0" />
+    </joint>
+
+    <joint name="chassis_TO_left_wheel" type="continuous">
+        <parent link="chassis" />
+        <child link="left_wheel" />
+        <origin xyz="0.0 ${(track_width/2.0)} -${(chassis_height/2.0)}" rpy="0.0 0.0 0.0" />
+        <axis xyz = "0 1 0" />
+    </joint>
+
+    <joint name="chassis_TO_right_wheel" type="continuous">
+        <parent link="chassis" />
+        <child link="right_wheel" />
+        <origin xyz="0.0 -${(track_width/2.0)} -${(chassis_height/2.0)}" rpy="0.0 0.0 0.0" />
+        <axis xyz = "0 1 0" />
+    </joint>
+
+</robot>

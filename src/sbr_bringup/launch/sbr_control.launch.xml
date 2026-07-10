@@ -1,0 +1,35 @@
+<launch>
+      
+      <!-- ================= CONTROL NODES ================= -->
+
+      <!-- State Observer -->
+      <node pkg="sbr_controls"
+            exec="state_observer"
+            name="state_observer_node"
+            output="screen">
+            <param name="use_sim_time" value="true"/>
+      </node>
+
+      <!-- Balance Controller -->
+      <node pkg="sbr_controls"
+            exec="balance_control"
+            name="balance_control_node"
+            output="screen">
+            <param name="use_sim_time" value="true"/>
+            <param name="balance_loop_freq" value="100"/>
+            <param name="velocity_loop_freq" value="10"/>
+      </node>
+
+      <!-- 'xterm -e' opens a separate terminal window just for teleop keyboard node. -->
+      <!-- Teleop Keyboard -->
+      <node pkg="sbr_controls"
+            exec="teleop_keyboard"
+            name="teleop_keyboard"
+            output="screen"
+            launch-prefix="xterm -e">
+            <param name="linear_speed" value="0.2"/>
+            <param name="angular_speed" value="0.5"/>
+            <param name="vel_publishing_freq" value="20"/>
+      </node>
+
+</launch>

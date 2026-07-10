@@ -1,3 +1,4 @@
+# This node implements a cascaded PID controller to keep the self balancing robot upright.
 
 import rclpy
 from rclpy.node import Node
@@ -14,35 +15,36 @@ class BalanceControl(Node):
     def __init__(self):
         super().__init__("balance_node")
 
-        # Creating parameters
+        # Declaring parameters
         self.declare_parameter("balance_loop_freq", 100) # Hz
         self.declare_parameter("velocity_loop_freq", 10)  # Hz
 
-        # Declaring parameters
+        # Getting parameters
         self.balance_loop_freq = self.get_parameter("balance_loop_freq").value
         self.velocity_loop_freq = self.get_parameter("velocity_loop_freq").value
         
         # Creating and initiating variables
         # PID loop gains and variables
         self.previous_time = self.get_clock().now()
-        self.integral = 0.0
-        self.integral_max = 1.0
+        self.integral: float = 0.0
+        self.integral_max: float = 1.0
         self.p_gain: float = 30.0
         self.i_gain: float = 0.015
         self.d_gain: float = 0.5
 
         # Robot's state 
-        self.pitch_angle = 0.0
-        self.yaw_angle = 0.0
-        self.pitch_rate = 0.0
-        self.yaw_rate = 0.0
-        self.is_fallen = False
+        self.pitch_angle: float = 0.0
+        self.yaw_angle: float = 0.0
+        self.pitch_rate: float = 0.0
+        self.yaw_rate: float = 0.0
+        self.is_fallen: bool = False
         self.current_velocity: float = 0.0
 
         # Desired state
         self.target_pitch_angle: float = 0.0
-        self.corrected_target_pitch_angle = 0.0
+        self.corrected_target_pitch_angle: float = 0.0
         self.desired_velocity: float = 0.0
+        self.desired_yaw_rate: float = 0.0
         
         # Velocity loop variables 
         self.v_gain: float = 0.1 
@@ -74,9 +76,15 @@ class BalanceControl(Node):
         self.velocity_publisher = self.create_publisher(TwistStamped,
                                                         "/diff_drive_controller/cmd_vel",
                                                         10)
-
+        
+        # Creating a subscriber to get teleop commands 
+        self.teleop_subscriber = self.create_subscription(TwistStamped,
+                                                          "/teleop_cmd",
+                                                          self.callback_teleop_cmd,
+                                                          10)
+        
         # Creating a timer to run the position control loop
-        self.pos_control_loop_timer = self.create_timer((1/self.balance_loop_freq), 
+        self.balance_loop_timer = self.create_timer((1/self.balance_loop_freq), 
                                                     self.balance_control_loop)
 
         # Creating a timer to run the velocity control loop 
@@ -102,7 +110,12 @@ class BalanceControl(Node):
 
         self.current_velocity = robot_odom.twist.twist.linear.x
 
-      
+    # Callback method to get teleop commands
+    def callback_teleop_cmd(self, msg: TwistStamped):
+    
+        self.desired_velocity = msg.twist.linear.x
+        self.desired_yaw_rate = msg.twist.angular.z
+
     # Velocity control loop which keeps the velocity from drifting too much from the desired value
     def vel_control_loop(self):
         
@@ -133,7 +146,7 @@ class BalanceControl(Node):
         if self.is_fallen:
             self.integral = 0.0
             output_vel = 0.0                            
-            self.pos_control_loop_timer.cancel()    
+            self.balance_loop_timer.cancel()    
             self.vel_control_loop_timer.cancel()
 
         else:
@@ -161,7 +174,7 @@ class BalanceControl(Node):
         msg = TwistStamped()
         msg.header.stamp = self.get_clock().now().to_msg()
         msg.twist.linear.x = output_vel
-        msg.twist.angular.z = 0.0
+        msg.twist.angular.z = self.desired_yaw_rate
         
         self.velocity_publisher.publish(msg)
 

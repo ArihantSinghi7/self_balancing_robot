@@ -24,7 +24,8 @@ setup(
     },
     entry_points={
         'console_scripts': [
-        "state_observer = sbr_controls.state_observer:main"
+        "state_observer = sbr_controls.state_observer:main",
+        "balance_control = sbr_controls.balance_control:main"
         ],
     },
 )

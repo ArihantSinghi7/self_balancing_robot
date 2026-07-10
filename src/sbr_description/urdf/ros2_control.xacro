@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Gazebo plugin to load ros2_control -->
+  <gazebo>
+    <plugin filename="gz_ros2_control-system"
+            name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+      <parameters>$(find sbr_bringup)/config/ros2_control.yaml</parameters>
+      <ros>
+        <remapping>~/robot_description:=/robot_description</remapping>
+      </ros>
+    </plugin>
+  </gazebo>
+
+  
+  <ros2_control name="self_balancing_robot" type="system">
+
+    <!-- ros2_control hardware interface block -->
+    <hardware>
+      <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+    </hardware>
+
+    <!-- Robot Base -->
+    <joint name="chassis_TO_left_wheel">
+      <command_interface name="velocity">
+        <param name="min">-10</param>
+        <param name="max"> 10</param>
+      </command_interface>
+      <state_interface name="position"   />
+      <state_interface name="velocity"   />
+    </joint>
+
+    <joint name="chassis_TO_right_wheel">
+      <command_interface name="velocity">
+        <param name="min">-10</param>
+        <param name="max"> 10</param>
+      </command_interface>
+      <state_interface name="position"   />
+      <state_interface name="velocity"   />
+    </joint>
+
+  </ros2_control>
+
+</robot>

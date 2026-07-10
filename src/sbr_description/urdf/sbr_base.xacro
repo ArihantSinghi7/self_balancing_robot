@@ -13,6 +13,10 @@
     <xacro:property name="wheel_width"    value="0.018" />  
     <xacro:property name="track_width"    value="0.140" />   <!-- left-to-right wheel center distance -->
     
+    <xacro:property name="imu_length" value="0.030" />
+    <xacro:property name="imu_width"  value="0.020" />
+    <xacro:property name="imu_height" value="0.005" />
+
 
     <!-- FUNCTIONS/MACROS -->
     <xacro:macro name="wheel" params="name_prefix">
@@ -69,6 +73,28 @@
     <xacro:wheel name_prefix="left" />
     <xacro:wheel name_prefix="right" />
 
+    <link name="imu">
+
+        <xacro:box_inertia m="0.005" x="${imu_length}" y="${imu_width}" z="${imu_height}" 
+                           o_xyz="0.0 0.0 0.0" o_rpy="0.0 0.0 0.0" />
+
+        <visual>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+            <geometry>
+                <box size="${imu_length} ${imu_width} ${imu_height}" />
+            </geometry>        
+            <material name="magenta" />
+        </visual>
+
+        <collision>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+            <geometry>
+                <box size="${imu_length} ${imu_width} ${imu_height}" />
+            </geometry>        
+        </collision>
+    
+    </link>
+
 
     <!-- JOINTS -->
     <joint name="base_link_TO_chassis" type="fixed">
@@ -89,6 +115,13 @@
         <child link="right_wheel" />
         <origin xyz="0.0 -${(track_width/2.0)} -${(chassis_height/2.0)}" rpy="0.0 0.0 0.0" />
         <axis xyz = "0 1 0" />
+
+    </joint>
+
+        <joint name="chassis_TO_imu" type="fixed">
+        <parent link="chassis" />
+        <child link="imu" />
+        <origin xyz="0.0 0.0 ${(chassis_height/2.0) + (imu_height/2.0)}" rpy="0.0 0.0 0.0" />
     </joint>
 
 </robot>

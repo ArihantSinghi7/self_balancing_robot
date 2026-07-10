@@ -1,0 +1,50 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 1000  # Hz
+    use_sim_time: true
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    diff_drive_controller:
+      type: diff_drive_controller/DiffDriveController
+
+
+diff_drive_controller:
+  ros__parameters:
+
+    # Joint names
+    left_wheel_names:  ["chassis_TO_left_wheel"]
+    right_wheel_names: ["chassis_TO_right_wheel"]
+
+    # Physical dimensions
+    wheel_separation: 0.140
+    wheel_radius: 0.022
+    
+    # Correction Factors
+    wheel_separation_multiplier: 1.0
+    left_wheel_radius_multiplier: 1.0
+    right_wheel_radius_multiplier: 1.0
+
+    # Frames
+    enable_odom_tf: true
+    odom_frame_id: odom
+    base_frame_id: base_link
+ 
+    open_loop: false
+    position_feedback: true
+    cmd_vel_timeout: 0.5
+
+    linear.x.max_velocity: 1.0
+    linear.x.min_velocity: -1.0
+    linear.x.max_acceleration: 1.0
+    linear.x.max_deceleration: -1.0
+    linear.x.max_jerk: .NAN
+    linear.x.min_jerk: .NAN
+
+    angular.z.max_velocity: 1.0
+    angular.z.min_velocity: -1.0
+    angular.z.max_acceleration: 1.0
+    angular.z.max_deceleration: -1.0
+    angular.z.max_jerk: .NAN
+    angular.z.min_jerk: .NAN

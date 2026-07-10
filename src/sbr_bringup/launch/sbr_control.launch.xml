@@ -23,8 +23,8 @@
       <!-- 'xterm -e' opens a separate terminal window just for teleop keyboard node. -->
       <!-- Teleop Keyboard -->
       <node pkg="sbr_controls"
-            exec="teleop_keyboard"
-            name="teleop_keyboard"
+            exec="sbr_teleop_keyboard"
+            name="teleop_keyboard_node"
             output="screen"
             launch-prefix="xterm -e">
             <param name="linear_speed" value="0.2"/>

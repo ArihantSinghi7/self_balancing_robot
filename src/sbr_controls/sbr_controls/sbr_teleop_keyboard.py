@@ -6,6 +6,7 @@ import sys
 import tty
 import termios
 import threading
+import time
 from geometry_msgs.msg import TwistStamped
 
 # NOTE:
@@ -15,9 +16,8 @@ from geometry_msgs.msg import TwistStamped
 
 # Defining key bindings to control the robot
 KEY_BINDINGS = {
-    'S': (0.0, 0.0),   # STOP
     'W': (1.0, 0.0),   # FORWARD
-    'X': (-1.0, 0.0),  # BACKWARD
+    'S': (-1.0, 0.0),  # BACKWARD
     'A': (0.0, 1.0),   # COUNTER-CLOCKWISE ROTATION 
     'D': (0.0, -1.0),  # CLOCKWISE ROTATION
 }
@@ -26,12 +26,13 @@ KEY_BINDINGS = {
 BANNER = r"""
 Self Balancing Robot Teleop
 ------------------
-    W               S : Stop
+    W               
     |               W : Forward
-A - S - D           X : Backward
+A --|-- D           S : Backward
     |               A : Turn Left / Rotate Counter-Clockwise 
-    X               D : Turn Right / Rotate Clockwise  
+    S               D : Turn Right / Rotate Clockwise  
 
+- Hold the keys for motion. Robot stops when no keys is pressed.
 
 Ctrl+C: Quit
 ------------------
@@ -45,18 +46,23 @@ class TeleopKeyboard(Node):
         super().__init__("teleop_keyboard")
 
         # Declaring parameters
-        self.declare_parameter('linear_speed', 0.2)
-        self.declare_parameter('angular_speed', 0.5)
+        self.declare_parameter('linear_speed', 0.3)
+        self.declare_parameter('angular_speed', 0.8)
         self.declare_parameter('vel_publishing_freq', 20)
+        self.declare_parameter('key_press_check_freq', 20)
+        self.declare_parameter('key_timeout', 0.1)
 
         # Getting parameters
         self.linear_speed = self.get_parameter("linear_speed").value
         self.angular_speed = self.get_parameter("angular_speed").value
         self.vel_publishing_freq = self.get_parameter("vel_publishing_freq").value
+        self.key_press_check_freq = self.get_parameter("key_press_check_freq").value
+        self.key_timeout = self.get_parameter("key_timeout").value
 
         # Creating and initiating variables
         self.v_x: float = 0.0                              
         self.w_z: float = 0.0
+        self.last_key_time: float = time.time()
 
         # Creating a publisher for teleop commands
         self.teleop_cmd_publisher = self.create_publisher(TwistStamped,
@@ -67,7 +73,10 @@ class TeleopKeyboard(Node):
         self.get_keyboard_input_loop = self.create_timer((1.0/self.vel_publishing_freq), 
                                                          self.publish_teleop_cmd)
 
-
+        # Creating a timer to check key presses
+        self.watchdog_timer = self.create_timer((1.0/self.key_press_check_freq),
+                                                self.watchdog)
+        
         # NOTE:
         # Since we are running two threads and both either uses or updates  these variables: self.v_x, self.w_z
         # we need to create a thread lock such that only one thread can access these variables at a time.
@@ -85,6 +94,8 @@ class TeleopKeyboard(Node):
         self.kb_thread.start()			# Starts the new thread which runs parallel to the main thread
 
         print(BANNER)
+
+        self.get_logger().info("'teleop_keyboard' node has been started.")
 
 
     # NOTE:
@@ -105,11 +116,20 @@ class TeleopKeyboard(Node):
         return key
 
 
+    # Method to check whether a key press has expired
+    def watchdog(self):
+        if time.time() - self.last_key_time > self.key_timeout:
+            with self.lock:
+                self.v_x = 0.0
+                self.w_z = 0.0
+
+
     # Method to get keyboard input
     def get_keyboard_input(self):
 
         while self.kb_thread_running:
-            key = self.get_key()            # This statement will blocks this thread until a key is pressed.
+            key = self.get_key()              # This statement will blocks this thread until a key is pressed.
+            self.last_key_time = time.time()  # Record time of every key press
 
             # Thread lock once the input is received
             with self.lock:
